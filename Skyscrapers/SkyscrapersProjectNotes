@@ -1,0 +1,47 @@
+https://www.puzzle-skyscrapers.com/
+
+Sudoku Strategies:
+https://www.sudokuwiki.org/y_wing_strategy
+
+The rules are simple.
+The objective is to place skyscrapers in all cells on the grid according to the rules:
+- The height of the skyscrapers is from 1 to the size of the grid i.e. 1 to 4 for a 4x4 puzzle.
+- You cannot have two skyscrapers with the same height on the same row or column.
+- The numbers on the sides of the grid indicate how many skyscrapers would you see if you look in the direction of the arrow.
+Place numbers in each cell to indicate the height of the skyscrapers.
+
+Permutation check:
+Copy field
+Place permutation
+Check clues (more or less visible is incorrect)
+Otherwise it is correct
+
+Sub-Line:
+Empty line of cells from edge to a solution number
+
+Case Number One:
+If clue == 1 solution is N
+
+Case Number N
+If clue == N solution is "Gamma"
+
+Case Alpha:
+Get all permutations for a line
+Remove incorrect permutatios (Permutation check)
+Check correct permutations for candidate elimination
+
+Case Beta:
+Find cell with minimum candidates
+Check all candidates
+if it creates impossible puzzle, eliminate it
+
+Solution:
+
+*) Test Case Alpha
+*) Check "Naked Candidates"
+*) Check "Hidden Candidates"
+(Remove candidates when placing solution numbers)
+(Restart afer removing candidates)
+*) Find naked groups
+*) Find hidden groups
+*) Test Case Beta
