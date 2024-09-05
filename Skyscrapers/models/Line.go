@@ -1,4 +1,6 @@
-package main
+package models
+
+import "fmt"
 
 type Line struct {
 	Index               int
@@ -12,7 +14,7 @@ type Line struct {
 func (line *Line) GetFreeCandidates() {
 	result := make(map[int]bool)
 	for _, c := range line.Cells {
-		if c.Solution != 0 {
+		if c.ContainsSolution() {
 			continue
 		}
 		for k := range c.CanRep.list {
@@ -103,9 +105,12 @@ func (line *Line) RemoveIncorrectPermutations() {
 	for pindex := 0; pindex < len(line.permutations); {
 		var i int = 0
 		for j := 0; j < len(line.Cells); j++ {
-			if line.Cells[j].Solution > 0 {
-				data[j] = line.Cells[j].Solution
+			if line.Cells[j].ContainsSolution() {
+				data[j] = line.Cells[j].GetFirst()
 			} else {
+				if i >= len(line.permutations[pindex]) {
+					continue
+				}
 				data[j] = line.permutations[pindex][i]
 				i++
 			}
@@ -125,77 +130,116 @@ func (line *Line) RemoveIncorrectPermutations() {
 Case Alpha:
 Get all permutations for a line
 Remove incorrect permutatios (Permutation check)
-Check coppect permutations for "candidate elimination"
-Otherwise return empty list
-
-Should be executed before call:
-line.GetPermutations()
-line.RemoveIncorrectPermutations()
-
-if len(line.permutations) == 0 { ok = false; return; }
+Check correct permutations for candidate elimination
+Return list of eliminations
 */
-func (line *Line) ProcessCaseAlpha() (done bool) {
-	done = false
-
+func (line *Line) ProcessCaseAlpha() []Elimination {
+	result := make([]Elimination, 0)
+	if line.LeftClue == 0 && line.RightClue == 0 {
+		return result
+	}
+	line.GetPermutations()
+	line.RemoveIncorrectPermutations()
+	if len(line.permutations) == 0 {
+		return result
+	}
 	var i int = 0
 	for cindex := 0; cindex < len(line.Cells); cindex++ {
-		if line.Cells[cindex].Solution > 0 {
+		if line.Cells[cindex].ContainsSolution() {
 			continue
 		}
 		// data is the list of candidates for cell from permutations
 		data := NewCanRep()
 		for pindex := 0; pindex < len(line.permutations); pindex++ {
-			//data[pindex] = line.permutations[pindex][i]
 			data.Add(line.permutations[pindex][i])
 		}
 		i++
-		//e := line.Cells[cindex].GetEliminations(data)
-		//result = append(result, e...)
 
-		// if !line.Cells[cindex].Equals(data) {
-		// 	ok = true
-		// 	line.Cells[cindex].SetCandidates(data)
-		// }
-		if line.Cells[cindex].RemoveAbsent(data) {
-			done = true
-		}
+		r := line.Cells[cindex].ProcessAbsent(data)
+		result = append(result, r...)
 	}
-	return
+	return result
 }
 
-// finds both naked and hidden candidates
-func (line *Line) FindSoloCandidates() []Candidate {
-	result := make([]Candidate, 0)
+/*
+Hidden Candidates
+Check all candidates in line
+count cells, containing it
+if count is 1, it is hidden candidate
+eliminate other candidates in the cell
+*/
+func (line *Line) ProcessHiddenCandidates() []Elimination {
+	result := make([]Elimination, 0)
 	line.GetFreeCandidates()
 	for _, v := range line.freeCandidates {
-		row := 0
-		col := 0
-		num := 0
+		var celref *Cell = nil
 		count := 0
 		for _, cell := range line.Cells {
 			if cell.DoesContain(v) {
-				count++
-				if count > 1 {
-					break
+				if count == 0 {
+					celref = cell
+					count = 1
 				} else {
-					num = v
-					row = cell.Row
-					col = cell.Column
+					count++
+					break
 				}
 			}
 		}
 		if count == 1 {
-			result = append(result, Candidate{Row: row, Col: col, Number: num})
+
+			for num := range celref.list {
+				if num != v {
+					el := Elimination{
+						Row:     celref.Row,
+						Col:     celref.Column,
+						Num:     num,
+						Comment: "ProcessHiddenCandidates",
+					}
+					result = append(result, el)
+				}
+			}
 		}
 	}
 	return result
 }
 
-func (line *Line) RemoveCandidate(num int) {
-	// for _, cell := range line.Cells {
-	// 	cell.RemoveCandidate(num)
-	// }
-	for i := 0; i < len(line.Cells); i++ {
-		line.Cells[i].RemoveCandidate(num)
+/*
+Naked Candidate
+Finds all cells, containing only one candidate
+Eliminate it from all other cells
+Returns list of eliminations
+*/
+func (line *Line) ProcessNakedCandidates() []Elimination {
+	result := make([]Elimination, 0)
+	for _, cell := range line.Cells {
+
+		if len(cell.CanRep.list) == 1 {
+			num := cell.GetFirst()
+			for _, other := range line.Cells {
+				if cell.Row == other.Row && cell.Column == other.Column {
+					continue
+				}
+				if !other.DoesContain(num) {
+					continue
+				}
+				el := Elimination{
+					Row:     other.Row,
+					Col:     other.Column,
+					Num:     num,
+					Comment: fmt.Sprintf("Naked candidate in row %v col %v", cell.Row, cell.Column),
+				}
+				result = append(result, el)
+			}
+		}
 	}
+	return result
 }
+
+// func (line *Line) RemoveCandidate(num int) {
+// 	// for _, cell := range line.Cells {
+// 	// 	cell.RemoveCandidate(num)
+// 	// }
+// 	for i := 0; i < len(line.Cells); i++ {
+// 		line.Cells[i].RemoveCandidate(num)
+// 	}
+// }

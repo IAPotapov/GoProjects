@@ -8,6 +8,12 @@ type StringGenerator struct {
 	baseMap     map[byte]byte
 }
 
+func NewStringGenerator(seed uint64) *StringGenerator {
+	var s StringGenerator
+	s.Initialize(seed)
+	return &s
+}
+
 func (sgen *StringGenerator) Initialize(seed uint64) {
 	sgen.baseMap = make(map[byte]byte)
 

@@ -11,26 +11,29 @@ The objective is to place skyscrapers in all cells on the grid according to the 
 Place numbers in each cell to indicate the height of the skyscrapers.
 
 Permutation check:
-Copy field
-Place permutation
-Check clues (more or less visible is incorrect)
+Check clues
+more or less visible is incorrect
 Otherwise it is correct
-
-Sub-Line:
-Empty line of cells from edge to a solution number
-
-Case Number One:
-If clue == 1 solution is N
-
-Case Number N
-If clue == N solution is "Gamma"
 
 Case Alpha:
 Get all permutations for a line
 Remove incorrect permutatios (Permutation check)
 Check correct permutations for candidate elimination
+Returns list of eliminations
 
 Case Beta:
+Save field state
+Pick first cell with two candidates: A and B
+Place candidate A
+Create list of elimenated candidates listA
+Restore field state
+Place candidate B
+Create list of elimenated candidates listB
+Restore field state
+Compare listA and listB
+
+
+Last Case. Guess.
 Find cell with minimum candidates
 Check all candidates
 if it creates impossible puzzle, eliminate it
@@ -40,8 +43,6 @@ Solution:
 *) Test Case Alpha
 *) Check "Naked Candidates"
 *) Check "Hidden Candidates"
-(Remove candidates when placing solution numbers)
-(Restart afer removing candidates)
 *) Find naked groups
 *) Find hidden groups
 *) Test Case Beta

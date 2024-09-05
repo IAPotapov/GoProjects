@@ -1,14 +1,17 @@
 package main
 
+import "sync"
+
 type Job struct {
-	Index         int
-	Input         string
-	Seed          uint64
-	Complexity    int
-	WorkFlag      *bool
-	ResultChannel chan int
-	Result        string
-	HashString    string
+	Index int
+	Input string
+	//Seed        uint64
+	Complexity  int
+	WorkFlag    *bool
+	SuccessFlag bool
+	wg          *sync.WaitGroup
+	Result      string
+	HashString  string
 	*Sha256Data
 	*StringGenerator
 }
@@ -21,19 +24,20 @@ func (job *Job) DoJob() {
 }
 
 func (job *Job) Start() {
-
-	var i uint64 = job.Seed
+	//var i uint64 = job.Seed
 	for *(job.WorkFlag) {
 		job.Update()
 
 		job.CalculateSha256()
 		if job.IsCorrect() {
 			job.FormatResult()
-			job.ResultChannel <- job.Index
+			*(job.WorkFlag) = false
+			job.SuccessFlag = true
 			break
 		}
-		i++
+		//i++
 	}
+	job.wg.Done()
 }
 
 func (job *Job) Update() {

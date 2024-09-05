@@ -11,11 +11,18 @@ import (
 type Sha256Data struct {
 	original []byte
 	k        [64]uint32
+	m        [64]uint32
 	data     [64]byte
 	datalen  uint32
 	bitlen   uint64
 	state    [8]uint32
 	hash     [32]byte
+}
+
+func NewSha256Data() *Sha256Data {
+	var d Sha256Data
+	d.Initialize()
+	return &d
 }
 
 func (data *Sha256Data) Initialize() {
@@ -155,12 +162,12 @@ func (data *Sha256Data) Update() {
 
 func (data *Sha256Data) Transform() {
 	var a, b, c, d, e, f, g, h, i, j, t1, t2 uint32
-	m := make([]uint32, 64)
+
 	for i, j = 0, 0; i < 16; i, j = i+1, j+4 {
-		m[i] = (uint32(data.data[j]) << 24) | (uint32(data.data[j+1]) << 16) | (uint32(data.data[j+2]) << 8) | (uint32(data.data[j+3]))
+		data.m[i] = (uint32(data.data[j]) << 24) | (uint32(data.data[j+1]) << 16) | (uint32(data.data[j+2]) << 8) | (uint32(data.data[j+3]))
 	}
 	for ; i < 64; i++ {
-		m[i] = SIG1(m[i-2]) + m[i-7] + SIG0(m[i-15]) + m[i-16]
+		data.m[i] = SIG1(data.m[i-2]) + data.m[i-7] + SIG0(data.m[i-15]) + data.m[i-16]
 	}
 
 	a = data.state[0]
@@ -173,7 +180,7 @@ func (data *Sha256Data) Transform() {
 	h = data.state[7]
 
 	for i = 0; i < 64; i++ {
-		t1 = h + EP1(e) + CH(e, f, g) + data.k[i] + m[i]
+		t1 = h + EP1(e) + CH(e, f, g) + data.k[i] + data.m[i]
 		t2 = EP0(a) + MAJ(a, b, c)
 		h = g
 		g = f
